@@ -1,6 +1,7 @@
 package com.xj.payment_processor.service;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -25,17 +26,42 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public Double getUserBalance(Long userId){
+    public Double getUserBalance(Long userId) {
         String redisKey = "user_balance:" + userId;
-        Double balance = (Double) redisTemplate.opsForValue().get(redisKey);
-        if (balance == null) {
-            balance = userRepository.findById(userId)
-            .map(User::getBalance)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        String balanceStr = (String) redisTemplate.opsForValue().get(redisKey);
+        if (balanceStr != null) {
+            return Double.parseDouble(balanceStr);
         }
+        Double balance = getUserBalanceFromDB(userId);
+        redisTemplate.opsForValue().set(redisKey, String.valueOf(balance), 5, TimeUnit.MINUTES);
+
         return balance;
     }
 
+    public Double getUserBalance(String username) {
+        String redisKey = "user_balance:" + username;
+        String balanceStr = (String) redisTemplate.opsForValue().get(redisKey);
+        if (balanceStr != null) {
+            return Double.parseDouble(balanceStr);
+        }
+        Double balance = getUserBalanceFromDB(username);
+        redisTemplate.opsForValue().set(redisKey, String.valueOf(balance), 5, TimeUnit.MINUTES);
+
+        return balance;
+    }
+
+    public Double getUserBalanceFromDB(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getBalance)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public Double getUserBalanceFromDB(String username) {
+        return userRepository.findByUsername(username)
+        .map(User::getBalance)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+    
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
