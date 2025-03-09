@@ -22,6 +22,11 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/{userId}/balance")
+    public Double getUserBalance(@PathVariable Long userId) {
+        return userService.getUserBalance(userId);
+    }
+
     @PostMapping("/register")   
     public ResponseEntity<User> registerUser(@RequestParam String username, @RequestParam Double balance) {
         User user = userService.createUser(username, balance);
