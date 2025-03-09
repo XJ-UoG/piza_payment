@@ -42,9 +42,7 @@ public class TransactionEventProcessor {
 
             // Check balance
             if (sender.getBalance() < amount) {
-                transaction.setStatus("FAILED");
-                transactionRepository.save(transaction);
-                return;
+                throw new IllegalStateException();
             }
 
             // Process transfer
