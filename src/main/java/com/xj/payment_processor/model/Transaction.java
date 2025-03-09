@@ -11,6 +11,9 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String status;
+    
     @ManyToOne
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
@@ -27,10 +30,6 @@ public class Transaction {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public User getSender() {
@@ -67,6 +66,7 @@ public class Transaction {
 
     public Transaction() {
         this.timestamp = LocalDateTime.now();
+        this.status = "PENDING";
     }
 
     public Transaction(User sender, User receiver, Double amount) {
@@ -74,5 +74,14 @@ public class Transaction {
         this.receiver = receiver;
         this.amount = amount;
         this.timestamp = LocalDateTime.now();
+        this.status = "PENDING";
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
