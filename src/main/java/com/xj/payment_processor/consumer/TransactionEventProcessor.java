@@ -56,17 +56,19 @@ public class TransactionEventProcessor {
 
             // Update Redis cache
             redisTemplate.opsForValue().set("user_balance:" + senderId, 
-                String.valueOf(sender.getBalance()), 5, TimeUnit.MINUTES);
+            String.valueOf(sender.getBalance()), 5, TimeUnit.MINUTES);
             redisTemplate.opsForValue().set("user_balance:" + receiverId, 
-                String.valueOf(receiver.getBalance()), 5, TimeUnit.MINUTES);
+            String.valueOf(receiver.getBalance()), 5, TimeUnit.MINUTES);
 
             // Update transaction status
             transaction.setStatus("COMPLETED");
+            redisTemplate.opsForValue().set("txn_status:" + transactionId, "COMPLETED", 5, TimeUnit.MINUTES);
             transactionRepository.save(transaction);
 
         } catch (Exception e) {
             Transaction transaction = transactionRepository.findById(transactionId).orElseThrow();
             transaction.setStatus("FAILED");
+            redisTemplate.opsForValue().set("txn_status:" + transactionId, "FAILED", 5, TimeUnit.MINUTES);
             transactionRepository.save(transaction);
         }
     }
