@@ -4,13 +4,16 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.xj.payment_processor.model.User;
 import com.xj.payment_processor.repository.UserRepository;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService{
     private final UserRepository userRepository;
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -19,9 +22,10 @@ public class UserService {
         this.redisTemplate = redisTemplate;
     }
 
-    public User createUser(String username, Double balance) {
+    public User createUser(String username, String password, Double balance) {
         User user = new User();
         user.setUsername(username);
+        user.setPassword(password);
         user.setBalance(balance);
         return userRepository.save(user);
     }
@@ -68,5 +72,11 @@ public class UserService {
 
     public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }

@@ -18,7 +18,7 @@ public class TransactionEventProducer {
         event.put("senderId", senderId);
         event.put("receiverId", receiverId);
         event.put("amount", amount);
-
+        
         kafkaTemplate.send("transaction-events", event.toString());
     }
 }

@@ -28,6 +28,8 @@ public class TransactionEventProcessor {
     @Transactional
     @KafkaListener(topics = "transaction-events", groupId = "payment-group")
     public void processTransaction(String message) {
+        System.out.println("TransactionEventProcessor: Message received: " + message);
+        
         JSONObject json = new JSONObject(message);
         Long transactionId = json.getLong("transactionId");
         Long senderId = json.getLong("senderId");

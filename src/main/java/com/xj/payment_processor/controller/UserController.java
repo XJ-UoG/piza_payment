@@ -26,12 +26,6 @@ public class UserController {
     public Double getUserBalance(@PathVariable Long userId) {
         return userService.getUserBalance(userId);
     }
-
-    @PostMapping("/register")   
-    public ResponseEntity<User> registerUser(@RequestParam String username, @RequestParam Double balance) {
-        User user = userService.createUser(username, balance);
-        return ResponseEntity.ok(user);
-    }
     
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
