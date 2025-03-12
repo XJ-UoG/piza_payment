@@ -30,17 +30,17 @@ public class TransactionConsumer {
 
         try {
             transactionService.processTransaction(transactionId, senderId, receiverId, amount);
-            System.out.println("Transaction " + transactionId + " completed successfully.");
+            System.out.println("SUCCESS TRANSACTION " + transactionId);
             
         } catch (Exception e) {
-            System.out.println("Transaction " + transactionId + " failed: " + e.getMessage());
+            System.out.println("FAILED TRANSACTION " + transactionId + e.getMessage());
         }
     }
 
     @KafkaListener(topics = "transaction-status-update", groupId = "payment-group")
     public void updateTransactionStatus(String message) {
         JSONObject json = new JSONObject(message);
-        String transactionId = json.getString("transactionId");
+        String transactionId = String.valueOf(json.get("transactionId"));
         String status = json.getString("status");
         responseStorage.completeResponse(transactionId, status);
     }

@@ -28,25 +28,24 @@ public class TransactionController {
             @RequestParam Long senderId,
             @RequestParam Long receiverId,
             @RequestParam Double amount) {
+        String requestId = "???";
         try {
             // Publish event to Kafka
             Transaction transaction = transactionService.initiateTransfer(senderId, receiverId, amount);
 
-            // Wait for response, transactionID will be used as requestID for response
             Long transactionId = transaction.getId();
-            String requestId = String.valueOf(transactionId);
+            requestId = String.valueOf(transactionId);
 
             CompletableFuture<String> future = ResponseStorage.waitForResponse(requestId);
             String status = future.get(3, TimeUnit.SECONDS);
             return ResponseEntity.ok(Map.of(
-                "message", "Transaction Successful",
-                "transactionId", requestId,
-                "status", status
+                "status", status,
+                "transactionId", requestId
             ));
         } catch (TimeoutException e) {
             return ResponseEntity.accepted().body(Map.of(
-                "message", "Transaction is processing",
-                "status", "PENDING"
+                "status", "PENDING",
+                "transactionId", requestId
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
