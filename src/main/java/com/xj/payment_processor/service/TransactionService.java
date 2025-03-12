@@ -1,6 +1,7 @@
 package com.xj.payment_processor.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.xj.payment_processor.model.Transaction;
 import com.xj.payment_processor.model.User;
@@ -65,15 +66,41 @@ public class TransactionService {
 
     public String getTransactionStatus(Long transactionId) {
         String status = redisTemplate.opsForValue().get("txn_status:" + transactionId);
-        if (status == null) {
-            // Fallback to database if Redis doesn't have the status
-            try {
-                Transaction transaction = getTransaction(transactionId);
-                return transaction.getStatus();
-            } catch (Exception e) {
-                return "UNKNOWN";
-            }
+        if (status != null) {
+            return status;
         }
-        return status;
+        // Fallback to database
+        status = transactionRepository.findStatusById(transactionId);
+        return status != null ? status : "UNKNOWN";
+    }
+
+    public void updateTransactionStatus(Long transactionId, String status) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+            .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        transaction.setStatus(status);
+        transactionRepository.save(transaction);
+        redisTemplate.opsForValue().set("txn_status:" + transactionId, status, 5, TimeUnit.MINUTES);
+    }
+
+    @Transactional
+    public void processTransaction(Long transactionId, Long senderId, Long receiverId, Double amount) {
+        try {
+            User sender = userRepository.findById(senderId).orElseThrow();
+            User receiver = userRepository.findById(receiverId).orElseThrow();
+
+            // Check balance
+            if (sender.getBalance() < amount) {
+                throw new IllegalStateException();
+            }
+            sender.setBalance(sender.getBalance() - amount);
+            receiver.setBalance(receiver.getBalance() + amount);
+            userRepository.save(sender);
+            userRepository.save(receiver);
+            updateTransactionStatus(transactionId, "COMPLETED");
+            transactionEventProducer.updateTransactionStatus(transactionId, "COMPLETED");
+        } catch (Exception e) {
+            updateTransactionStatus(transactionId, "FAILED");
+            transactionEventProducer.updateTransactionStatus(transactionId, "FAILED");
+        }
     }
 }

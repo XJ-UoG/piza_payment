@@ -21,4 +21,12 @@ public class TransactionEventProducer {
         
         kafkaTemplate.send("transaction-events", event.toString());
     }
+
+    public void updateTransactionStatus(Long transactionId, String status) {
+        JSONObject event = new JSONObject();
+        event.put("transactionId", transactionId);
+        event.put("status", status);
+
+        kafkaTemplate.send("transaction-status-update", event.toString());
+    }
 }
